@@ -1,0 +1,181 @@
+---
+title: "Learn Shiny Notes"
+author: "Joel Larwood"
+output: 
+  html_document:
+    toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Following : https://vimeo.com/131218530
+# Session 1 
+
+## Architecture of Shiny Apps 
+
+- Interact with the app to change output. Behind the scenes the app modifies the script to be consistent with user inputs. 
+- Can run from computer locally or on the cloud 
+- App has 2 components 
+  - Webpage in html (html)
+  - Server instructions (R)
+
+## Templates 
+
+Use the same template for each shiny app 
+
+This code loads a shiny app (with no content)
+```
+library(shiny)
+ui <- fluidPage()
+server <- function(input, output){}
+shinyApp(ui = ui, server = server)
+```
+Add to the app within the template 
+  - You need to stop the session to change the server function (i.e. put in inputs and outputs)
+
+
+```
+library(shiny)
+ui <- fluidPage("Hello World") 
+server <- function(input, output){}
+shinyApp(ui = ui, server = server)
+```
+
+## `fluidPage`: Inputs and Outputs 
+
+- Inputs and outputs are arguments added to `fluidPage`
+
+```
+ui <- fluidPage(
+  # *Input() functions, 
+  # *Output() functions  
+)
+```
+
+### Input functions 
+
+This function will build a slider 
+
+```
+ui <- fluidPage(
+    sliderInput(
+    inputID = "num", #ref of the input
+    label = "Choose a number"), #label/instructions/prompt
+    value = 25, # starting value
+    min = 1, # minimum possible value
+    max = 100 # maxiumum possible value
+    )
+)
+```
+
+There are ~12 input functions. Most end with Input (i.e. `dataRangeInput()`)
+
+The syntax is the same for the input functions 
+  - `inputId` is passed to the server
+  - `label` is the inoput prompt for the user 
+  
+### Output functions 
+
+Multiple types of outputs i.e. `plotOutput()` for a plot 
+
+The syntax is similar to inout functions 
+  - `outputId` is the name goven to the output object 
+
+The output function is passed to fluid page 
+
+```
+ui <- fluidPage(
+    sliderInput(
+    inputID = "num", #ref of the input
+    label = "Choose a number"), #label/instructions/prompt
+    value = 25, # starting value
+    min = 1, # minimum possible value
+    max = 100 # maxiumum possible value
+    ),
+    plotOutput("hist") 
+)
+```
+This app provides a html `<div>` that allows space for the plot to appear in the app. The app does not know what the plot *is* (this requires a server function)
+
+# `server`: Explains what to do with inputs and outputs 
+
+## Output object needs to be saved to `output$'objectname'`
+  
+i.e. 
+  
+``` 
+  server <- function(input, output){
+  output$Hist <- renderPlot({
+    #Script for plot goes here
+    })
+  }
+```
+  
+The render functions are used to polace an R object into the html page (i.e. `renderPlot`, `renderText`). 
+
+The code to build the ouptut goes inside the `render*()` function. 
+
+This would create a plot of a normal historgram with 100 values
+```
+renderPlot({
+hist(rnrom(100)) 
+})
+```
+
+The braces let you out as many lines as you want to build the plot 
+
+
+This will build the hisotgram with the title given by the title object
+```
+  server <- function(input, output){
+  output$Hist <- renderPlot({
+    title <- "100 random normal values"
+    hist(rnorm(100), main = title)
+    })
+  }
+```
+
+## Use input values to create outout values 
+
+- Use input values with `input$'input name`
+- Input values come from the inout functions in the `ui` object
+  - the `input$'imputname'` always has the current value set by the user
+- The input can be passed into the `redner*()` function
+
+This code would give the histogram of the `rnorm` of whatever value `input$num` is
+```
+  server <- function(input, output){
+  output$Hist <- renderPlot({
+    title <- "100 random normal values"
+    hist(rnorm(input$num), main = title)
+    })
+  }
+```
+
+### Three rules of server script 
+1. Save the output that you build with `output$'output name'`
+2. build the output with a `render*()` function 
+3. Access and use inout values with `input$'input_name'`
+
+## Sharing Apps 
+To share an app over the web you replace your compouter with a webserver. To share the following structure should be used:   
+  App |
+    -| app.R # the shinyt script must be called this! 
+    -| additional files (i.e. css, datasets etc.)
+     
+    OR when splitting the UI and server script
+  App | 
+    -| server.R
+    -| ui.R
+
+- Can share using shinyapps.io 
+  - free to use and scalable 
+
+
+
+
+
+
